@@ -184,6 +184,115 @@ OnSubscribeFromIterable 实现了 OnSubscribe<T>，是OnSubscribe中的一种。
 终于看到了咱们的onNext()方法了。到这里，from的调用也算走通了。
 
 
+###2.just创建
+实例：
+
+```
+ Observable.just("just").subscribe(new Subscriber<String>() {
+            @Override
+            public void onCompleted() {
+                Log.e("HP","onCompleted");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onNext(String s) {
+                Log.e("HP",s);
+            }
+        });
+```
+
+打印结果
+
+```
+just
+onCompleted
+```
+
+走进just
+
+```
+    public final static <T> Observable<T> just(final T value) {
+        return ScalarSynchronousObservable.create(value);
+    }
+
+
+    public static final <T> ScalarSynchronousObservable<T> create(T t) {
+        return new ScalarSynchronousObservable<T>(t);
+    }
+```
+返回的是一个ScalarSynchronousObservable对象，ScalarSynchronousObservable继承自Observable
+
+进入构造函数 
+
+```
+protected ScalarSynchronousObservable(final T t) {
+        super(new OnSubscribe<T>() {
+
+            @Override
+            public void call(Subscriber<? super T> s) {
+                /*
+                 *  We don't check isUnsubscribed as it is a significant performance impact in the fast-path use cases.
+                 *  See PerfBaseline tests and https://github.com/ReactiveX/RxJava/issues/1383 for more information.
+                 *  The assumption here is that when asking for a single item we should emit it and not concern ourselves with 
+                 *  being unsubscribed already. If the Subscriber unsubscribes at 0, they shouldn't have subscribed, or it will 
+                 *  filter it out (such as take(0)). This prevents us from paying the price on every subscription. 
+                 */
+                s.onNext(t);
+                s.onCompleted();
+            }
+
+        });
+        this.t = t;
+    }
+
+    protected Observable(OnSubscribe<T> f) {
+        this.onSubscribe = f;
+    }
+
+```
+
+调用了父类的构造方法，重写了call()方法，会发现又回到了最原始的创建方法
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #二.线程之间自由切换
